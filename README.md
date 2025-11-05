@@ -4,6 +4,8 @@
 
 [Chart.js](https://www.chartjs.org) plugin for live streaming data with real-time data visualization.
 
+![Demo Screenshot](assets/demo.gif)
+
 ## 🍴 Fork History
 
 This is a fork of the original [chartjs-plugin-streaming](https://github.com/nagix/chartjs-plugin-streaming) by nagix, which appears to be unmaintained.
@@ -114,8 +116,6 @@ npm run dev
 ```
 
 **Demo Location:** `http://localhost:5173/`
-
-![Demo Screenshot](assets/demo.jpg)
 
 ### Project Structure
 
