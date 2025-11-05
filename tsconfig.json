@@ -25,14 +25,6 @@
     "allowJs": false,
     "checkJs": false
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "docs",
-    "scripts",
-    "test"
-  ]
+  "include": ["src/**/*", "types"],
+  "exclude": ["node_modules", "dist", "docs", "scripts", "test"]
 }
