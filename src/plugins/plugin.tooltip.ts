@@ -1,4 +1,4 @@
-import { getAxisMap } from '../helpers/helpers.streaming';
+import { getAxisMap } from '@/helpers/helpers.streaming';
 
 const transitionKeys = { x: ['x', 'caretX'], y: ['y', 'caretY'] };
 

@@ -1,6 +1,6 @@
+import StreamingPlugin from '@/plugins/plugin.streaming';
+import RealTimeScale from '@/scales/scale.realtime';
 import { Chart } from 'chart.js';
-import StreamingPlugin from './plugins/plugin.streaming';
-import RealTimeScale from './scales/scale.realtime';
 
 const registerables = [StreamingPlugin, RealTimeScale];
 

@@ -23,7 +23,11 @@
     "isolatedModules": true,
     "noEmit": false,
     "allowJs": false,
-    "checkJs": false
+    "checkJs": false,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
   "include": ["src/**/*", "types"],
   "exclude": ["node_modules", "dist", "docs", "scripts", "test"]

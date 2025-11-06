@@ -1,3 +1,11 @@
+import {
+  resolveOption,
+  startDataRefreshTimer,
+  startFrameRefreshTimer,
+  stopDataRefreshTimer,
+  stopFrameRefreshTimer
+} from '@/helpers/helpers.streaming';
+import { getElements } from '@/plugins/plugin.annotation';
 import { defaults, TimeScale } from 'chart.js';
 import {
   _lookup,
@@ -10,14 +18,6 @@ import {
   noop,
   unclipArea
 } from 'chart.js/helpers';
-import {
-  resolveOption,
-  startDataRefreshTimer,
-  startFrameRefreshTimer,
-  stopDataRefreshTimer,
-  stopFrameRefreshTimer
-} from '../helpers/helpers.streaming';
-import { getElements } from '../plugins/plugin.annotation';
 
 interface TimerContext {
   frameRequestID?: number;

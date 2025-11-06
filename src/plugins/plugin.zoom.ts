@@ -1,6 +1,6 @@
+import { clamp, resolveOption } from '@/helpers/helpers.streaming';
 import { Chart, Scale } from 'chart.js';
 import { each } from 'chart.js/helpers';
-import { clamp, resolveOption } from '../helpers/helpers.streaming';
 
 interface ChartState {
   originalScaleOptions: { [key: string]: { duration: number; delay: number } };

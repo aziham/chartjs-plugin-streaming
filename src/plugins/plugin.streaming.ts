@@ -1,3 +1,15 @@
+import packageJson from '@/../package.json';
+import { getAxisMap } from '@/helpers/helpers.streaming';
+import {
+  attachChart as annotationAttachChart,
+  detachChart as annotationDetachChart
+} from '@/plugins/plugin.annotation';
+import { update as tooltipUpdate } from '@/plugins/plugin.tooltip';
+import {
+  attachChart as zoomAttachChart,
+  detachChart as zoomDetachChart
+} from '@/plugins/plugin.zoom';
+import RealTimeScale from '@/scales/scale.realtime';
 import { Chart, DatasetController, defaults, registry } from 'chart.js';
 import {
   clipArea,
@@ -6,18 +18,8 @@ import {
   noop,
   unclipArea
 } from 'chart.js/helpers';
-import { getAxisMap } from '../helpers/helpers.streaming';
-import {
-  attachChart as annotationAttachChart,
-  detachChart as annotationDetachChart
-} from '../plugins/plugin.annotation';
-import { update as tooltipUpdate } from '../plugins/plugin.tooltip';
-import {
-  attachChart as zoomAttachChart,
-  detachChart as zoomDetachChart
-} from '../plugins/plugin.zoom';
-import RealTimeScale from '../scales/scale.realtime';
-const version = '3.2.0';
+
+const version = packageJson.version;
 
 interface StreamingContext {
   render: (chart: Chart) => void;
