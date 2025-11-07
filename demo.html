@@ -14,9 +14,10 @@
 
       body {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
         min-height: 100vh;
         overflow-x: hidden;
+        color: #1f2937;
       }
 
       .task-manager {
@@ -29,13 +30,14 @@
       }
 
       .header {
-        background: linear-gradient(90deg, #0078d4 0%, #005a9e 100%);
+        background: #2d3748;
         color: white;
         padding: 15px 20px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        border-bottom: 2px solid #005a9e;
+        border-bottom: 2px solid #4a5568;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
 
       .header h1 {
@@ -49,13 +51,13 @@
       .header-icon {
         width: 24px;
         height: 24px;
-        background: white;
+        background: #6b7280;
         border-radius: 3px;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: bold;
-        color: #0078d4;
+        color: white;
         padding: 15px 20px;
       }
 
@@ -85,10 +87,11 @@
       }
 
       .metric-card {
-        background: #f8f9fa;
-        border: 1px solid #e1e5e9;
-        border-radius: 6px;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
         padding: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
       }
 
       .metric-header {
@@ -139,9 +142,9 @@
       }
 
       .process-card {
-        background: #f8f9fa;
-        border: 1px solid #e1e5e9;
-        border-radius: 6px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
         padding: 12px;
         display: flex;
         align-items: center;
@@ -151,8 +154,7 @@
       .process-icon {
         width: 32px;
         height: 32px;
-        background: #0078d4;
-        border-radius: 4px;
+        border-radius: 6px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -179,7 +181,7 @@
       .status-bar {
         background: #f3f3f3;
         border-top: 1px solid #d1d1d1;
-        padding: 8px 20px;
+        padding: 10px 20px 15px;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -320,7 +322,7 @@
         </div>
 
         <div class="processes-section">
-          <div class="section-title">Top Processes</div>
+          <div class="section-title">Running Processes</div>
           <div class="processes-grid" id="processes-grid">
             <!-- Processes will be added dynamically -->
           </div>
@@ -395,6 +397,18 @@
           } else {
             element.textContent = Math.round(value);
           }
+
+          // Apply color based on metric type
+          const colorMap = {
+            cpu: '#3b82f6',
+            memory: '#10b981',
+            disk: '#F7B93E',
+            network: '#8b5cf6',
+            gpu: '#f97316',
+            temp: '#dc2626'
+          };
+
+          element.style.color = colorMap[metric] || '#000';
         }
       }
 
@@ -477,8 +491,8 @@
               datasets: [
                 {
                   data: [],
-                  borderColor: '#0078d4',
-                  backgroundColor: 'rgba(0, 120, 212, 0.1)',
+                  borderColor: '#3b82f6',
+                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
                   fill: true
                 }
               ]
@@ -495,8 +509,8 @@
               datasets: [
                 {
                   data: [],
-                  borderColor: '#107c10',
-                  backgroundColor: 'rgba(16, 124, 16, 0.1)',
+                  borderColor: '#10b981',
+                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
                   fill: true
                 }
               ]
@@ -513,8 +527,8 @@
               datasets: [
                 {
                   data: [],
-                  borderColor: '#ff8c00',
-                  backgroundColor: 'rgba(255, 140, 0, 0.1)',
+                  borderColor: '#F7B93E',
+                  backgroundColor: 'rgba(247, 185, 62, 0.1)',
                   fill: true
                 }
               ]
@@ -531,8 +545,8 @@
               datasets: [
                 {
                   data: [],
-                  borderColor: '#8b4789',
-                  backgroundColor: 'rgba(139, 71, 137, 0.1)',
+                  borderColor: '#8b5cf6',
+                  backgroundColor: 'rgba(139, 92, 246, 0.1)',
                   fill: true
                 }
               ]
@@ -558,8 +572,8 @@
               datasets: [
                 {
                   data: [],
-                  borderColor: '#d13438',
-                  backgroundColor: 'rgba(209, 52, 56, 0.1)',
+                  borderColor: '#f97316',
+                  backgroundColor: 'rgba(249, 115, 22, 0.1)',
                   fill: true
                 }
               ]
@@ -576,8 +590,8 @@
               datasets: [
                 {
                   data: [],
-                  borderColor: '#ca5010',
-                  backgroundColor: 'rgba(202, 80, 16, 0.1)',
+                  borderColor: '#dc2626',
+                  backgroundColor: 'rgba(220, 38, 38, 0.1)',
                   fill: true
                 }
               ]
@@ -599,32 +613,66 @@
       // Generate processes
       function generateProcesses() {
         const processNames = [
-          'System',
-          'Chrome',
-          'Firefox',
-          'VS Code',
-          'Spotify',
-          'Discord',
-          'Steam',
-          'File Manager',
-          'Security',
-          'Cloud Sync',
-          'Teams',
-          'Slack',
-          'Node.js',
-          'Docker',
-          'Database',
-          'Editor',
-          'Writer',
-          'Spreadsheet'
+          'node',
+          'npm',
+          'yarn',
+          'vite',
+          'webpack',
+          'babel',
+          'typescript',
+          'eslint',
+          'prettier',
+          'jest',
+          'cypress',
+          'playwright',
+          'redis-server',
+          'postgres',
+          'mysql',
+          'mongodb',
+          'docker',
+          'docker-compose',
+          'nginx',
+          'apache',
+          'vscode',
+          'code-server',
+          'chrome',
+          'firefox',
+          'safari',
+          'selenium',
+          'puppeteer',
+          'webpack-dev-server',
+          'vite-server',
+          'nextjs',
+          'nuxtjs',
+          'gatsby',
+          'create-react-app',
+          'angular-cli',
+          'vue-cli',
+          'storybook',
+          'jest-worker',
+          'tsc',
+          'nodemon',
+          'pm2',
+          'supervisor',
+          'forever',
+          'express',
+          'fastify',
+          'nestjs',
+          'prisma',
+          'sequelize',
+          'knex',
+          'typeorm'
         ];
 
         const numProcesses = 8;
         const newProcesses = [];
 
+        // Create a shuffled copy of process names to ensure uniqueness
+        const shuffledNames = [...processNames].sort(() => 0.5 - Math.random());
+        const selectedNames = shuffledNames.slice(0, numProcesses);
+
         for (let i = 0; i < numProcesses; i++) {
-          const name =
-            processNames[Math.floor(Math.random() * processNames.length)];
+          const name = selectedNames[i];
           const cpu = Math.round(Math.random() * 80);
           const memory = Math.round(Math.random() * 2000);
 
@@ -647,14 +695,18 @@
 
         if (grid) {
           grid.innerHTML = processes
-            .slice(0, 6)
+            .slice(0, 8)
             .map(
               (process) => `
                     <div class="process-card">
-                        <div class="process-icon">${process.icon}</div>
+                        <div class="process-icon" style="background:${getProcessColor(
+                          process.name
+                        )}">${process.icon}</div>
                         <div class="process-info">
                             <div class="process-name">${process.name}</div>
-                            <div class="process-cpu">CPU: ${process.cpu}% | Memory: ${process.memory}MB</div>
+                            <div class="process-cpu">CPU: ${
+                              process.cpu
+                            }% | Memory: ${process.memory}MB</div>
                         </div>
                     </div>
                 `
@@ -687,6 +739,78 @@
         document.getElementById(
           'update-time'
         ).textContent = `Last updated: ${timeString}`;
+      }
+
+      // Get color based on process type
+      function getProcessColor(processName) {
+        const colorMap = {
+          // Server/Backend processes
+          nginx: '#269ABC',
+          apache: '#D9534F',
+          node: '#8CC84B',
+          express: '#8CC84B',
+          fastify: '#1A56DB',
+          nestjs: '#E0234E',
+          mysql: '#DC382D',
+          postgres: '#336791',
+          mongodb: '#4FAA4D',
+          redis: '#DC382D',
+
+          // Build tools & Dev tools
+          webpack: '#1C78C0',
+          vite: '#4F46E5',
+          babel: '#D97706',
+          typescript: '#3178C6',
+          eslint: '#4B32C3',
+          prettier: '#7C3AED',
+          jest: '#C21325',
+
+          // Package managers
+          npm: '#CB3837',
+          yarn: '#2C8EBB',
+
+          // Editors/IDEs
+          vscode: '#007ACC',
+          'code-server': '#007ACC',
+
+          // Databases
+          docker: '#2496ED',
+          'docker-compose': '#2496ED',
+          prisma: '#2D3748',
+          sequelize: '#4DAD5F',
+          knex: '#C35831',
+          typeorm: '#C34A2C',
+
+          // Testing
+          cypress: '#4B5563',
+          selenium: '#6B61B4',
+          playwright: '#16A34A',
+          puppeteer: '#0D9488',
+
+          // Frameworks
+          nextjs: '#003D82',
+          nuxtjs: '#007C4F',
+          gatsby: '#663399',
+          'create-react-app': '#2E6D99',
+          'angular-cli': '#DD0031',
+          'vue-cli': '#2D6B58',
+          storybook: '#B91C1C'
+        };
+
+        return colorMap[processName] || getRandomColor(processName);
+      }
+
+      // Fallback to generate consistent colors for unknown processes
+      function getRandomColor(processName) {
+        // Create a deterministic color based on process name
+        let hash = 0;
+        for (let i = 0; i < processName.length; i++) {
+          hash = processName.charCodeAt(i) + ((hash << 5) - hash);
+        }
+
+        // Convert to HSL for more pleasant colors
+        const hue = hash % 360;
+        return `hsl(${hue}, 70%, 50%)`;
       }
 
       // Initialize everything
