@@ -3,7 +3,7 @@
   "homepage": "https://github.com/aziham/chartjs-plugin-streaming",
   "description": "Chart.js plugin for live streaming data",
   "author": "Hamza Aziane <hamza.aziane@pm.me>",
-  "version": "3.4.0",
+  "version": "3.5.0",
   "license": "MIT",
   "main": "dist/chartjs-plugin-streaming.js",
   "module": "dist/chartjs-plugin-streaming.esm.js",
