@@ -7,18 +7,47 @@ import {
   TimeScaleOptions
 } from 'chart.js';
 
-interface Options {
+export interface MouseEventObject {
+  type: string;
+  chart: Chart;
+  native: MouseEvent;
+  x: number;
+  y: number;
+}
+
+interface StreamingOptions {
+  /**
+   * How long data is displayed in milliseconds (default: 10000)
+   */
   duration?: number;
+  /**
+   * Delay before data appears in milliseconds (default: 0)
+   */
   delay?: number;
+  /**
+   * Animation frame rate (default: 30)
+   */
   frameRate?: number;
+  /**
+   * Data refresh interval in milliseconds (default: 1000)
+   */
   refresh?: number;
+  /**
+   * Callback function for data updates
+   */
   onRefresh?: (this: RealTimeScale, chart: Chart) => void | null;
+  /**
+   * Pause streaming (default: false)
+   */
   pause?: boolean;
+  /**
+   * Time-to-live for data points in milliseconds (default: undefined)
+   */
   ttl?: number;
 }
 
 export type RealTimeScaleOptions = TimeScaleOptions & {
-  realtime: Options;
+  realtime: StreamingOptions;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -45,7 +74,7 @@ declare module 'chart.js' {
     /**
      * Per chart streaming plugin options.
      */
-    streaming?: Options;
+    streaming?: StreamingOptions;
   }
 
   enum UpdateModeEnum {

@@ -10,6 +10,7 @@ import {
   detachChart as zoomDetachChart
 } from '@/plugins/plugin.zoom';
 import RealTimeScale from '@/scales/scale.realtime';
+import type { MouseEventObject } from '@/types';
 import { Chart, DatasetController, defaults, registry } from 'chart.js';
 import {
   clipArea,
@@ -25,7 +26,8 @@ interface StreamingContext {
   render: (chart: Chart) => void;
   canvas: HTMLCanvasElement;
   mouseEventListener: (event: MouseEvent) => void;
-  lastMouseEvent?: any;
+  visibilityChangeListener?: () => void;
+  lastMouseEvent?: MouseEventObject;
   annotationPlugin?: any;
   zoomPlugin?: any;
   resetZoom?: any;
@@ -122,6 +124,31 @@ export default {
 
     canvas.addEventListener('mousedown', mouseEventListener);
     canvas.addEventListener('mouseup', mouseEventListener);
+
+    // Add visibility change listener to handle tab switching
+    if (typeof document !== 'undefined' && document.addEventListener) {
+      const visibilityChangeListener = () => {
+        if (!document.hidden) {
+          // When tab becomes visible again, update all real-time scales to avoid delay
+          const scales = chart.scales;
+          if (scales) {
+            Object.keys(scales).forEach((key) => {
+              const scale = scales[key];
+              if (scale && scale instanceof RealTimeScale) {
+                // Update the scale's head time to current time to avoid delay
+                if (scale.$realtime) {
+                  scale.$realtime.head = Date.now();
+                }
+              }
+            });
+          }
+        }
+      };
+
+      document.addEventListener('visibilitychange', visibilityChangeListener);
+      // Store the listener for cleanup
+      streaming.visibilityChangeListener = visibilityChangeListener;
+    }
   },
 
   afterInit(chart: Chart) {
@@ -134,9 +161,12 @@ export default {
 
     if (scales) {
       each(scales, (scaleOptions: any) => {
-        if (scaleOptions.type === 'realtime') {
+        // scaleOptions can be any since it's part of chart config
+        if (scaleOptions?.type === 'realtime') {
           // Allow Bézier control to be outside the chart
-          (elements as any).line.capBezierPoints = false;
+          if (elements) {
+            (elements as any).line.capBezierPoints = false;
+          }
         }
       });
     }
@@ -147,20 +177,24 @@ export default {
 
     try {
       const plugin = registry.getPlugin('annotation');
-      annotationAttachChart(plugin, chart);
+      if (plugin) {
+        annotationAttachChart(plugin, chart);
+      }
     } catch (e) {
       annotationDetachChart(chart);
     }
 
     try {
       const plugin = registry.getPlugin('zoom');
-      zoomAttachChart(plugin, chart);
+      if (plugin) {
+        zoomAttachChart(plugin, chart);
+      }
     } catch (e) {
       zoomDetachChart(chart);
     }
   },
 
-  beforeDatasetUpdate(chart: Chart, args: any) {
+  beforeDatasetUpdate(chart: Chart, args: { meta: any; mode: string }) {
     const { meta, mode } = args;
 
     if (mode === 'quiet') {
@@ -174,7 +208,7 @@ export default {
     }
   },
 
-  afterDatasetUpdate(chart: Chart, args: any) {
+  afterDatasetUpdate(chart: Chart, args: { meta: any; mode: string }) {
     const { meta, mode } = args;
     const { data: elements = [], dataset: element, controller } = meta;
 
@@ -191,7 +225,10 @@ export default {
     }
   },
 
-  beforeDatasetDraw(chart: Chart, args: any) {
+  beforeDatasetDraw(
+    chart: Chart,
+    args: { meta: { xAxisID: string; yAxisID: string; controller: any } }
+  ) {
     const { ctx, chartArea, width, height } = chart;
     const { xAxisID, yAxisID, controller } = args.meta;
     const area = {
@@ -216,14 +253,14 @@ export default {
     unclipArea(chart.ctx);
   },
 
-  beforeEvent(chart: Chart, args: any) {
+  beforeEvent(chart: Chart, args: { event: MouseEventObject }) {
     const streaming = (chart as any).$streaming as StreamingContext;
     const event = args.event;
 
-    if (event.type === 'mousemove') {
+    if (event?.type === 'mousemove') {
       // Save mousemove event for reuse
       streaming.lastMouseEvent = event;
-    } else if (event.type === 'mouseout') {
+    } else if (event?.type === 'mouseout') {
       // Remove mousemove event
       delete streaming.lastMouseEvent;
     }
@@ -232,7 +269,7 @@ export default {
   afterDestroy(chart: Chart) {
     const { scales, tooltip } = chart;
     const streaming = (chart as any).$streaming as StreamingContext;
-    const { canvas, mouseEventListener } = streaming;
+    const { canvas, mouseEventListener, visibilityChangeListener } = streaming;
 
     delete (chart as any).update;
     if (tooltip) {
@@ -241,6 +278,18 @@ export default {
 
     canvas.removeEventListener('mousedown', mouseEventListener);
     canvas.removeEventListener('mouseup', mouseEventListener);
+
+    // Remove visibility change listener
+    if (
+      visibilityChangeListener &&
+      typeof document !== 'undefined' &&
+      document.removeEventListener
+    ) {
+      document.removeEventListener(
+        'visibilitychange',
+        visibilityChangeListener
+      );
+    }
 
     each(scales, (scale: any) => {
       if (scale instanceof RealTimeScale) {

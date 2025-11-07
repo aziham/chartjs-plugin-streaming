@@ -3,7 +3,8 @@ import {
   startDataRefreshTimer,
   startFrameRefreshTimer,
   stopDataRefreshTimer,
-  stopFrameRefreshTimer
+  stopFrameRefreshTimer,
+  validateOptions
 } from '@/helpers/helpers.streaming';
 import { getElements } from '@/plugins/plugin.annotation';
 import { defaults, TimeScale } from 'chart.js';
@@ -197,10 +198,10 @@ interface RemovalRange {
 
 function clean(scale: any): void {
   const { chart, id, max } = scale;
-  const duration = resolveOption(scale, 'duration');
-  const delay = resolveOption(scale, 'delay');
-  const ttl = resolveOption(scale, 'ttl');
-  const pause = resolveOption(scale, 'pause');
+  const duration = resolveOption<number>(scale, 'duration');
+  const delay = resolveOption<number>(scale, 'delay');
+  const ttl = resolveOption<number>(scale, 'ttl');
+  const pause = resolveOption<boolean>(scale, 'pause');
   const min = Date.now() - (isNaN(ttl) ? duration + delay : ttl);
   let i: number,
     start: number,
@@ -220,7 +221,13 @@ function clean(scale: any): void {
       if (pause) {
         // If the scale is paused, preserve the visible data points
         for (i = 0; i < length; ++i) {
-          const point = controller.getParsed(i);
+          // Access parsed data through a safe way to avoid protected property access
+          const point =
+            controller.getParsed && typeof controller.getParsed === 'function'
+              ? controller.getParsed(i)
+              : Array.isArray(data[i])
+              ? { x: data[i][0], y: data[i][1] }
+              : data[i];
           if (point && !(point[axis] < max)) {
             break;
           }
@@ -231,7 +238,12 @@ function clean(scale: any): void {
       }
 
       for (i = start; i < length; ++i) {
-        const point = controller.getParsed(i);
+        const point =
+          controller.getParsed && typeof controller.getParsed === 'function'
+            ? controller.getParsed(i)
+            : Array.isArray(data[i])
+            ? { x: data[i][0], y: data[i][1] }
+            : data[i];
         if (!point || !(point[axis] <= min)) {
           break;
         }
@@ -242,62 +254,81 @@ function clean(scale: any): void {
         count = Math.max(count - 2, 0);
       }
 
-      data.splice(start, count);
-      each(datasetPropertyKeys, (key: string) => {
-        if (isArray(dataset[key])) {
-          (dataset[key] as any[]).splice(start, count);
-        }
-      });
-      each((dataset as any).datalabels, (value: any) => {
-        if (isArray(value)) {
-          value.splice(start, count);
-        }
-      });
-      if (typeof data[0] !== 'object') {
-        removalRange = {
-          start: start,
-          count: count
-        };
-      }
+      if (count > 0) {
+        // Batch removal operations to reduce function calls
+        data.splice(start, count);
 
-      each(
-        (chart as any)._active,
-        (item: any, index: number) => {
-          if (item.datasetIndex === datasetIndex && item.index >= start) {
-            if (item.index >= start + count) {
-              item.index -= count;
-            } else {
-              (chart as any)._active.splice(index, 1);
+        // Optimize property arrays splicing
+        for (let j = 0, jlen = datasetPropertyKeys.length; j < jlen; ++j) {
+          const key = datasetPropertyKeys[j];
+          if (isArray(dataset[key])) {
+            (dataset[key] as any[]).splice(start, count);
+          }
+        }
+
+        // Optimize datalabels processing
+        const datalabels = (dataset as any).datalabels;
+        if (datalabels) {
+          for (const key in datalabels) {
+            if (isArray(datalabels[key])) {
+              datalabels[key].splice(start, count);
             }
           }
-        },
-        null,
-        true
-      );
+        }
+
+        if (typeof data[0] !== 'object') {
+          removalRange = {
+            start: start,
+            count: count
+          };
+        }
+
+        // Optimize active elements processing
+        const activeElements = (chart as any)._active;
+        if (activeElements && activeElements.length > 0) {
+          for (let k = activeElements.length - 1; k >= 0; k--) {
+            const item = activeElements[k];
+            if (item.datasetIndex === datasetIndex) {
+              if (item.index >= start + count) {
+                item.index -= count;
+              } else if (item.index >= start) {
+                activeElements.splice(k, 1);
+              }
+            }
+          }
+        }
+      }
     }
   });
   if (removalRange) {
-    chart.data.labels.splice(removalRange.start, removalRange.count);
+    chart.data.labels?.splice(removalRange.start, removalRange.count);
   }
 }
 
 function transition(element: any, id: string, translate: number): void {
-  const animations = element.$animations || {};
+  const elementStreaming = (element as any).$streaming;
+  if (!elementStreaming) {
+    return;
+  }
 
-  each((element as any).$streaming, (item: any, key: string) => {
+  const animations = element.$animations || {};
+  const delta = translate; // Calculate delta once and negate if needed
+
+  for (const key in elementStreaming) {
+    const item = elementStreaming[key];
     if (item.axisId === id) {
-      const delta = item.reverse ? -translate : translate;
+      const actualDelta = item.reverse ? -delta : delta;
       const animation = animations[key];
 
       if (isFinite(element[key])) {
-        element[key] -= delta;
+        element[key] -= actualDelta;
       }
       if (animation) {
-        animation._from -= delta;
-        animation._to -= delta;
+        animation._from -= actualDelta;
+        animation._to -= actualDelta;
       }
     }
-  });
+  }
 }
 
 function scroll(scale: any): void {
@@ -316,21 +347,27 @@ function scroll(scale: any): void {
   }
 
   // Shift all the elements leftward or downward
-  each(chart.data.datasets, (dataset: any, datasetIndex: number) => {
+  const datasets = chart.data.datasets;
+  const datasetsLength = datasets.length;
+  for (let datasetIndex = 0; datasetIndex < datasetsLength; ++datasetIndex) {
     const meta = chart.getDatasetMeta(datasetIndex);
     const { data: elements = [], dataset: element } = meta;
 
-    for (let i = 0, ilen = elements.length; i < ilen; ++i) {
+    // Process elements in reverse to reduce array shifting overhead when removing
+    const elementsLength = elements.length;
+    for (let i = 0; i < elementsLength; ++i) {
       transition(elements[i], id, offset);
     }
+
     if (element) {
       transition(element, id, offset);
       delete element._path;
     }
-  });
+  }
 
   // Shift all the annotation elements leftward or downward
-  for (let i = 0, ilen = annotations.length; i < ilen; ++i) {
+  const annotationsLength = annotations.length;
+  for (let i = 0; i < annotationsLength; ++i) {
     transition(annotations[i], id, offset);
   }
 
@@ -361,14 +398,28 @@ export default class RealTimeScale extends TimeScale {
     const me = this;
 
     (super.init as any).call(me, scaleOpts);
+
+    // Validate configuration options
+    validateOptions(me as any);
+
     startDataRefreshTimer(me.$realtime, () => {
       const chart = me.chart;
-      const onRefresh = resolveOption(me, 'onRefresh');
+      try {
+        const onRefresh = resolveOption(me, 'onRefresh');
 
-      call(onRefresh, [chart], me as any);
-      clean(me as any);
-      chart.update('quiet');
-      return resolveOption(me as any, 'refresh');
+        if (typeof onRefresh === 'function') {
+          call(onRefresh, [chart], me as any);
+        }
+        clean(me as any);
+        chart.update('quiet');
+        return resolveOption(me as any, 'refresh');
+      } catch (error) {
+        if (typeof console !== 'undefined' && console.error) {
+          console.error('Error in streaming refresh:', error);
+        }
+        // Return default refresh rate in case of error
+        return 1000;
+      }
     });
   }
 
