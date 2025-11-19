@@ -15,8 +15,8 @@
       "require": "./dist/chartjs-plugin-streaming.js"
     }
   },
-  "jsdelivr": "dist/chartjs-plugin-streaming.min.js",
-  "unpkg": "dist/chartjs-plugin-streaming.min.js",
+  "jsdelivr": "dist/chartjs-plugin-streaming.js",
+  "unpkg": "dist/chartjs-plugin-streaming.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/aziham/chartjs-plugin-streaming.git"
@@ -38,7 +38,8 @@
   ],
   "scripts": {
     "build": "vite build",
-    "dev": "npm run build && vite"
+    "dev": "npm run build && vite",
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "chart.js": "^4.5.1",
